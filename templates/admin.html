@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
+<title>
+Traffic Admin Dashboard
+</title>
+
+<link rel="stylesheet"
+      href="/static/style.css">
+
+</head>
+
+
+<body>
+
+
+<header class="topbar">
+
+<h1>
+🔐 Traffic Admin Dashboard
+</h1>
+
+
+<a
+href="/"
+class="btn secondary">
+
+Main Dashboard
+
+</a>
+
+</header>
+
+
+
+<main class="container">
+
+
+<!-- LOGIN -->
+
+<section
+id="loginBox"
+class="card auth">
+
+
+<h2>
+Admin Login
+</h2>
+
+
+<input
+id="username"
+placeholder="Username"
+value="admin">
+
+
+<input
+id="password"
+type="password"
+placeholder="Password">
+
+
+<button
+id="login"
+class="btn">
+
+Login
+
+</button>
+
+
+<p id="loginMessage"></p>
+
+
+</section>
+
+
+
+<!-- ADMIN PANEL -->
+
+<section
+id="adminPanel"
+class="hidden">
+
+
+<div class="card">
+
+
+<div class="admin-header">
+
+<h2>
+💾 Historical Traffic Data
+</h2>
+
+
+<div>
+
+<button
+id="refresh"
+class="btn secondary">
+
+Refresh
+
+</button>
+
+
+<button
+id="logout"
+class="btn danger">
+
+Logout
+
+</button>
+
+</div>
+
+</div>
+
+
+
+<div class="table-container">
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>
+Time
+</th>
+
+<th>
+Intersection
+</th>
+
+<th>
+Vehicles
+</th>
+
+<th>
+Density
+</th>
+
+<th>
+Green Time
+</th>
+
+<th>
+Emergency
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody
+id="history">
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</section>
+
+
+</main>
+
+
+
+<script>
+
+async function checkLogin(){
+
+const response =
+await fetch("/api/me");
+
+const data =
+await response.json();
+
+
+if(data.admin){
+
+document
+.getElementById("loginBox")
+.classList.add("hidden");
+
+
+document
+.getElementById("adminPanel")
+.classList.remove("hidden");
+
+
+loadHistory();
+
+}
+
+}
+
+
+
+async function login(){
+
+const username =
+document
+.getElementById("username")
+.value;
+
+
+const password =
+document
+.getElementById("password")
+.value;
+
+
+const response =
+await fetch(
+
+"/api/login",
+
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":
+"application/json"
+},
+
+body:JSON.stringify({
+
+username,
+password
+
+})
+
+});
+
+
+const data =
+await response.json();
+
+
+if(data.success){
+
+checkLogin();
+
+}
+
+else{
+
+document
+.getElementById("loginMessage")
+.textContent =
+data.message;
+
+}
+
+}
+
+
+
+async function loadHistory(){
+
+const response =
+await fetch(
+"/api/history"
+);
+
+
+const data =
+await response.json();
+
+
+if(!data.success){
+
+return;
+
+}
+
+
+const tbody =
+document
+.getElementById("history");
+
+
+tbody.innerHTML =
+data.history
+.map(row => `
+
+<tr>
+
+<td>
+${row.timestamp}
+</td>
+
+<td>
+Intersection ${row.intersection_id}
+</td>
+
+<td>
+${row.vehicle_count}
+</td>
+
+<td>
+${row.density}
+</td>
+
+<td>
+${row.green_time}s
+</td>
+
+<td>
+${
+row.emergency_detected
+? "🚑 YES"
+: "No"
+}
+</td>
+
+</tr>
+
+`)
+.join("");
+
+}
+
+
+
+async function logout(){
+
+await fetch(
+
+"/api/logout",
+
+{
+method:"POST"
+}
+
+);
+
+location.reload();
+
+}
+
+
+
+document
+.getElementById("login")
+.addEventListener(
+"click",
+login
+);
+
+
+document
+.getElementById("refresh")
+.addEventListener(
+"click",
+loadHistory
+);
+
+
+document
+.getElementById("logout")
+.addEventListener(
+"click",
+logout
+);
+
+
+checkLogin();
+
+</script>
+
+
+</body>
+
+</html>
