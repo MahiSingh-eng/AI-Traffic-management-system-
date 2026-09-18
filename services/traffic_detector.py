@@ -1,104 +1,391 @@
 from ultralytics import YOLO
+
 import cv2
+import numpy as np
+
 import os
 
-# YOLO model
-model = YOLO("yolo11n.pt")
 
-# Objects that we consider vehicles
+MODEL_NAME = os.environ.get(
+    "YOLO_MODEL",
+    "yolo11n.pt"
+)
+
+
+model = YOLO(
+    MODEL_NAME
+)
+
+
+# --------------------------------------------------
+# VEHICLE CLASSES
+# --------------------------------------------------
+
 VEHICLE_CLASSES = {
+
     "car",
+
     "motorcycle",
+
     "bus",
+
     "truck"
+
 }
 
 
-def analyze_traffic(video_path):
+# --------------------------------------------------
+# EMERGENCY VEHICLES
+# --------------------------------------------------
 
-    cap = cv2.VideoCapture(video_path)
+EMERGENCY_CLASSES = {
 
-    if not cap.isOpened():
-        raise Exception("Unable to open video")
+    "ambulance",
 
-    total_vehicle_count = 0
-    frames_processed = 0
+    "fire_truck",
 
-    vehicle_counts = []
+    "police_car",
+
+    "emergency_vehicle"
+
+}
+
+
+# --------------------------------------------------
+# SIGNAL DECISION
+# --------------------------------------------------
+
+def calculate_signal_plan(
+    vehicle_count,
+    emergency=False
+):
+
+    # Emergency priority
+
+    if emergency:
+
+        return {
+
+            "density":
+                "Emergency Priority",
+
+            "green_time":
+                75,
+
+            "status":
+                "Emergency vehicle detected",
+
+            "phase":
+                "Priority"
+
+        }
+
+
+    # Low traffic
+
+    if vehicle_count <= 10:
+
+        return {
+
+            "density":
+                "Low",
+
+            "green_time":
+                15,
+
+            "status":
+                "Low traffic",
+
+            "phase":
+                "Green"
+
+        }
+
+
+    # Medium traffic
+
+    if vehicle_count <= 25:
+
+        return {
+
+            "density":
+                "Medium",
+
+            "green_time":
+                30,
+
+            "status":
+                "Moderate traffic",
+
+            "phase":
+                "Green"
+
+        }
+
+
+    # High traffic
+
+    return {
+
+        "density":
+            "High",
+
+        "green_time":
+            60,
+
+        "status":
+            "Heavy traffic",
+
+        "phase":
+            "Green"
+
+    }
+
+
+# --------------------------------------------------
+# ANALYZE IMAGE
+# --------------------------------------------------
+
+def analyze_frame(
+    raw_bytes
+):
+
+    image_array = np.frombuffer(
+
+        raw_bytes,
+
+        np.uint8
+
+    )
+
+
+    frame = cv2.imdecode(
+
+        image_array,
+
+        cv2.IMREAD_COLOR
+
+    )
+
+
+    if frame is None:
+
+        raise ValueError(
+            "Invalid image"
+        )
+
+
+    results = model(
+
+        frame,
+
+        verbose=False
+
+    )
+
+
+    vehicle_count = 0
+
+    emergency_detected = False
+
+    detected_objects = []
+
+
+    for result in results:
+
+        for box in result.boxes:
+
+            class_id = int(
+                box.cls[0]
+            )
+
+
+            class_name = str(
+
+                model.names[
+                    class_id
+                ]
+
+            ).lower()
+
+
+            if class_name in VEHICLE_CLASSES:
+
+                vehicle_count += 1
+
+                detected_objects.append(
+                    class_name
+                )
+
+
+            if class_name in EMERGENCY_CLASSES:
+
+                emergency_detected = True
+
+                detected_objects.append(
+                    class_name
+                )
+
+
+    signal = calculate_signal_plan(
+
+        vehicle_count,
+
+        emergency_detected
+
+    )
+
+
+    return {
+
+        "vehicle_count":
+            vehicle_count,
+
+        "emergency_detected":
+            emergency_detected,
+
+        "detected_objects":
+            detected_objects,
+
+        **signal
+
+    }
+
+
+# --------------------------------------------------
+# ANALYZE VIDEO
+# --------------------------------------------------
+
+def analyze_video(
+    video_path
+):
+
+    capture = cv2.VideoCapture(
+        video_path
+    )
+
+
+    if not capture.isOpened():
+
+        raise ValueError(
+            "Unable to open video"
+        )
+
+
+    counts = []
+
+    emergency_detected = False
+
+    frame_number = 0
+
 
     while True:
 
-        ret, frame = cap.read()
+        success, frame = capture.read()
 
-        if not ret:
+
+        if not success:
+
             break
 
-        # Process every 5th frame
-        if frames_processed % 5 != 0:
-            frames_processed += 1
-            continue
 
-        results = model(frame, verbose=False)
+        # Process every fifth frame
 
-        current_count = 0
+        if frame_number % 5 == 0:
 
-        for result in results:
+            results = model(
 
-            for box in result.boxes:
+                frame,
 
-                class_id = int(box.cls[0])
-                class_name = model.names[class_id]
+                verbose=False
 
-                if class_name in VEHICLE_CLASSES:
-                    current_count += 1
+            )
 
-        vehicle_counts.append(current_count)
 
-        total_vehicle_count += current_count
+            count = 0
 
-        frames_processed += 1
 
-        # Limit processing for deployment/demo
-        if frames_processed >= 300:
+            for result in results:
+
+                for box in result.boxes:
+
+                    class_id = int(
+                        box.cls[0]
+                    )
+
+
+                    class_name = str(
+
+                        model.names[
+                            class_id
+                        ]
+
+                    ).lower()
+
+
+                    if class_name in VEHICLE_CLASSES:
+
+                        count += 1
+
+
+                    if class_name in EMERGENCY_CLASSES:
+
+                        emergency_detected = True
+
+
+            counts.append(
+                count
+            )
+
+
+        frame_number += 1
+
+
+        # Limit demo processing
+
+        if frame_number >= 300:
+
             break
 
-    cap.release()
 
-    if not vehicle_counts:
-        return {
-            "vehicle_count": 0,
-            "density": "Low",
-            "green_time": 15,
-            "status": "Low traffic"
-        }
+    capture.release()
 
-    # Average detected vehicles
-    average_count = round(
-        sum(vehicle_counts) / len(vehicle_counts)
+
+    average_count = (
+
+        round(
+            sum(counts)
+            /
+            len(counts)
+        )
+
+        if counts
+
+        else 0
+
     )
 
-    # Traffic classification
-    if average_count <= 10:
 
-        density = "Low"
-        green_time = 15
-        status = "Low traffic"
+    signal = calculate_signal_plan(
 
-    elif average_count <= 25:
+        average_count,
 
-        density = "Medium"
-        green_time = 30
-        status = "Moderate traffic"
+        emergency_detected
 
-    else:
+    )
 
-        density = "High"
-        green_time = 60
-        status = "Heavy traffic"
 
     return {
-        "vehicle_count": average_count,
-        "density": density,
-        "green_time": green_time,
-        "status": status
+
+        "vehicle_count":
+            average_count,
+
+        "emergency_detected":
+            emergency_detected,
+
+        "detected_objects":
+            [],
+
+        **signal
+
     }
