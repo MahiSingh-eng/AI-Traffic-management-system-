@@ -4,10 +4,19 @@ services:
 
     name: ai-traffic-management
 
-    env: python
+    runtime: python
 
     buildCommand: pip install -r requirements.txt
 
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --workers 1 --timeout 120
 
-    plan: free
+    envVars:
+
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: ADMIN_USER
+        value: admin
+
+      - key: ADMIN_PASSWORD
+        sync: false
