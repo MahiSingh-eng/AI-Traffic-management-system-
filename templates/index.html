@@ -1,153 +1,426 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
 
-    <title>AI Traffic Management System</title>
+<title>
+AI Traffic Management System
+</title>
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet"
+      href="/static/style.css">
 
 </head>
 
+
 <body>
 
-<header>
 
-    <h1>🚦 AI Traffic Management System</h1>
+<header class="topbar">
 
-    <p>
-        Intelligent traffic analysis using Artificial Intelligence
-    </p>
+<div>
+
+<h1>
+🚦 AI Traffic Management System
+</h1>
+
+<p>
+Intelligent traffic monitoring and adaptive signal simulation
+</p>
+
+</div>
+
+
+<a
+href="/admin"
+class="btn secondary">
+
+🔐 Admin
+
+</a>
 
 </header>
 
 
-<main>
 
-    <section class="upload-card">
-
-        <h2>Traffic Analysis</h2>
-
-        <p>
-            Upload a traffic video to analyze vehicle density.
-        </p>
-
-        <form id="uploadForm">
-
-            <input
-                type="file"
-                id="video"
-                name="video"
-                accept="video/*"
-                required
-            >
-
-            <button type="submit">
-                Analyze Traffic
-            </button>
-
-        </form>
-
-        <p id="loading" class="hidden">
-            Processing video... Please wait.
-        </p>
-
-    </section>
+<main class="container">
 
 
-    <section id="dashboard" class="dashboard hidden">
+<!-- CONTROL PANEL -->
 
-        <h2>Traffic Dashboard</h2>
+<section class="card toolbar">
 
-        <div class="cards">
+<div>
 
-            <div class="card">
+<label>
 
-                <h3>Vehicles</h3>
+Intersection
 
-                <p id="vehicleCount">
-                    0
-                </p>
+<select id="intersection">
 
-            </div>
+</select>
 
+</label>
 
-            <div class="card">
-
-                <h3>Traffic Density</h3>
-
-                <p id="density">
-                    -
-                </p>
-
-            </div>
+</div>
 
 
-            <div class="card">
+<button
+id="startCamera"
+class="btn">
 
-                <h3>Recommended Green Time</h3>
+📹 Start Live Camera
 
-                <p>
-                    <span id="greenTime">0</span> sec
-                </p>
-
-            </div>
+</button>
 
 
-            <div class="card">
+<button
+id="stopCamera"
+class="btn danger">
 
-                <h3>Status</h3>
+⏹ Stop Camera
 
-                <p id="status">
-                    -
-                </p>
-
-            </div>
-
-        </div>
-
-    </section>
+</button>
 
 
-    <section class="system-flow">
+<label class="upload">
 
-        <h2>How the System Works</h2>
+🎥 Upload Traffic Video
 
-        <div class="flow">
+<input
+type="file"
+id="video"
+accept="video/*">
 
-            <div>📹<br>Traffic Video</div>
+</label>
 
-            <span>→</span>
+</section>
 
-            <div>🤖<br>AI Detection</div>
 
-            <span>→</span>
 
-            <div>🚗<br>Vehicle Count</div>
+<!-- LIVE CAMERA + SIGNAL -->
 
-            <span>→</span>
+<section class="main-grid">
 
-            <div>📊<br>Density Analysis</div>
 
-            <span>→</span>
+<div class="card">
 
-            <div>🚦<br>Signal Timing</div>
+<h2>
+📹 Live Traffic Camera
+</h2>
 
-        </div>
 
-    </section>
+<video
+id="camera"
+autoplay
+playsinline
+muted>
+</video>
+
+
+<canvas
+id="canvas"
+hidden>
+</canvas>
+
+
+<p id="cameraStatus">
+
+Camera stopped
+
+</p>
+
+</div>
+
+
+
+<!-- TRAFFIC SIGNAL -->
+
+<div class="card signal-card">
+
+<h2>
+🚦 Signal Simulation
+</h2>
+
+
+<div class="traffic-light">
+
+
+<span
+id="red"
+class="light red">
+</span>
+
+
+<span
+id="yellow"
+class="light yellow">
+</span>
+
+
+<span
+id="green"
+class="light green active">
+</span>
+
+
+</div>
+
+
+<div class="signal-info">
+
+<strong id="phase">
+Green
+</strong>
+
+
+<strong id="timer">
+15s
+</strong>
+
+</div>
+
+
+<p id="status">
+
+Waiting for traffic data
+
+</p>
+
+
+<div
+id="emergencyAlert"
+class="emergency-alert hidden">
+
+🚑 Emergency Vehicle Priority Active
+
+</div>
+
+</div>
+
+
+</section>
+
+
+
+<!-- METRICS -->
+
+<section class="metrics">
+
+
+<div class="metric card">
+
+<span>
+🚗 Vehicles
+</span>
+
+<strong id="vehicles">
+0
+</strong>
+
+</div>
+
+
+<div class="metric card">
+
+<span>
+📊 Density
+</span>
+
+<strong id="density">
+-
+</strong>
+
+</div>
+
+
+<div class="metric card">
+
+<span>
+⏱ Green Time
+</span>
+
+<strong>
+
+<span id="greenTime">
+0
+</span>
+
+sec
+
+</strong>
+
+</div>
+
+
+<div class="metric card">
+
+<span>
+🚑 Emergency
+</span>
+
+<strong id="emergency">
+No
+</strong>
+
+</div>
+
+
+</section>
+
+
+
+<!-- INTERSECTIONS -->
+
+<section class="card">
+
+<h2>
+🗺️ Multiple Intersections
+</h2>
+
+
+<div
+id="intersectionCards"
+class="intersection-grid">
+
+</div>
+
+</section>
+
+
+
+<!-- STATISTICS -->
+
+<section class="card">
+
+<h2>
+📈 Traffic Statistics
+</h2>
+
+
+<div class="chart-container">
+
+<canvas
+id="trafficChart">
+</canvas>
+
+</div>
+
+</section>
+
+
+
+<!-- SYSTEM FLOW -->
+
+<section class="card">
+
+<h2>
+⚙️ AI Decision Flow
+</h2>
+
+
+<div class="flow">
+
+
+<div>
+
+📹
+
+<br>
+
+Camera
+
+</div>
+
+
+<span>
+→
+</span>
+
+
+<div>
+
+🤖
+
+<br>
+
+AI Detection
+
+</div>
+
+
+<span>
+→
+</span>
+
+
+<div>
+
+🚗
+
+<br>
+
+Vehicle Count
+
+</div>
+
+
+<span>
+→
+</span>
+
+
+<div>
+
+📊
+
+<br>
+
+Density
+
+</div>
+
+
+<span>
+→
+</span>
+
+
+<div>
+
+🚦
+
+<br>
+
+Signal Decision
+
+</div>
+
+
+</div>
+
+</section>
+
 
 </main>
 
 
-<script src="{{ url_for('static', filename='script.js') }}">
+
+<script
+src="https://cdn.jsdelivr.net/npm/chart.js">
 </script>
+
+
+<script
+src="/static/script.js">
+</script>
+
 
 </body>
 
