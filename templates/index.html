@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>AI Traffic Management System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>🚦 AI Traffic Management System</h1>
+
+    <p>
+        Intelligent traffic analysis using Artificial Intelligence
+    </p>
+
+</header>
+
+
+<main>
+
+    <section class="upload-card">
+
+        <h2>Traffic Analysis</h2>
+
+        <p>
+            Upload a traffic video to analyze vehicle density.
+        </p>
+
+        <form id="uploadForm">
+
+            <input
+                type="file"
+                id="video"
+                name="video"
+                accept="video/*"
+                required
+            >
+
+            <button type="submit">
+                Analyze Traffic
+            </button>
+
+        </form>
+
+        <p id="loading" class="hidden">
+            Processing video... Please wait.
+        </p>
+
+    </section>
+
+
+    <section id="dashboard" class="dashboard hidden">
+
+        <h2>Traffic Dashboard</h2>
+
+        <div class="cards">
+
+            <div class="card">
+
+                <h3>Vehicles</h3>
+
+                <p id="vehicleCount">
+                    0
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Traffic Density</h3>
+
+                <p id="density">
+                    -
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Recommended Green Time</h3>
+
+                <p>
+                    <span id="greenTime">0</span> sec
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Status</h3>
+
+                <p id="status">
+                    -
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="system-flow">
+
+        <h2>How the System Works</h2>
+
+        <div class="flow">
+
+            <div>📹<br>Traffic Video</div>
+
+            <span>→</span>
+
+            <div>🤖<br>AI Detection</div>
+
+            <span>→</span>
+
+            <div>🚗<br>Vehicle Count</div>
+
+            <span>→</span>
+
+            <div>📊<br>Density Analysis</div>
+
+            <span>→</span>
+
+            <div>🚦<br>Signal Timing</div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="{{ url_for('static', filename='script.js') }}">
+</script>
+
+</body>
+
+</html>
