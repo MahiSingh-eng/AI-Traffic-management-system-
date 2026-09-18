@@ -1,0 +1,2 @@
+if frames_processed >= 300:
+    break
